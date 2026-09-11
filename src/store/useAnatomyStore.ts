@@ -204,4 +204,3 @@ export const useAnatomyStore = create<AnatomyState>((set, get) => ({
 if (typeof window !== 'undefined') {
   (window as any).__anatomyStore = useAnatomyStore;
 }
-

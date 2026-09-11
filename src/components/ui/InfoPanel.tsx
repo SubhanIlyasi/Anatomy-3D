@@ -1,300 +1,41 @@
 'use client';
 
 import React, { useState } from 'react';
-import {
-  X,
-  Target,
-  Maximize2,
-  Minimize2,
-  Scissors,
-  AlertTriangle,
-  Stethoscope,
-  Info,
-  ChevronRight,
-  Flame,
-  Bone,
-  Zap,
-  ExternalLink,
-} from 'lucide-react';
+import { Crosshair, ExternalLink, Maximize2, Scissors, X } from 'lucide-react';
 import { useAnatomyStore } from '../../store/useAnatomyStore';
 
 export const InfoPanel: React.FC = () => {
-  const selectedPartId = useAnatomyStore((state) => state.selectedPartId);
-  const isolatedPartId = useAnatomyStore((state) => state.isolatedPartId);
-  const isSidebarOpen = useAnatomyStore((state) => state.isSidebarOpen);
+  const [tab, setTab] = useState<'profile' | 'clinical' | 'supply'>('profile');
+  const selected = useAnatomyStore((state) => state.selectedPartId);
+  const isolated = useAnatomyStore((state) => state.isolatedPartId);
+  const isOpen = useAnatomyStore((state) => state.isSidebarOpen);
+  const data = useAnatomyStore((state) => state.getSelectedPartData)();
+  const select = useAnatomyStore((state) => state.selectPart);
+  const isolate = useAnatomyStore((state) => state.setIsolatedPart);
+  const dissect = useAnatomyStore((state) => state.dissectPart);
+  const setOpen = useAnatomyStore((state) => state.setSidebarOpen);
 
-  const selectPart = useAnatomyStore((state) => state.selectPart);
-  const setIsolatedPart = useAnatomyStore((state) => state.setIsolatedPart);
-  const dissectPart = useAnatomyStore((state) => state.dissectPart);
-  const setSidebarOpen = useAnatomyStore((state) => state.setSidebarOpen);
-  const getSelectedPartData = useAnatomyStore((state) => state.getSelectedPartData);
+  if (!isOpen) return <button onClick={() => setOpen(true)} className="atlas-surface absolute right-5 top-24 z-20 grid h-10 w-10 place-items-center rounded-xl text-cyan-200" title="Open analysis panel"><Crosshair size={17} /></button>;
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'clinical' | 'neurovascular'>('overview');
-
-  const partData = getSelectedPartData();
-  const isIsolated = selectedPartId !== null && isolatedPartId === selectedPartId;
-  const isMuscle = partData?.system === 'muscular';
-
-  if (!isSidebarOpen) {
-    return (
-      <button
-        onClick={() => setSidebarOpen(true)}
-        className="absolute right-6 top-24 z-20 p-3 bg-slate-950/80 hover:bg-slate-900 border border-cyan-500/30 rounded-2xl shadow-medical-panel backdrop-blur-xl text-cyan-400 hover:text-cyan-300 transition-all pointer-events-auto group"
-        title="Open Medical Inspector"
-      >
-        <Info className="w-5 h-5 group-hover:scale-110 transition-transform" />
-      </button>
-    );
-  }
-
-  return (
-    <aside className="absolute right-6 top-24 bottom-8 z-20 w-84 md:w-96 bg-slate-950/92 border border-slate-800/80 rounded-2xl shadow-medical-panel backdrop-blur-2xl flex flex-col pointer-events-auto overflow-hidden animate-in fade-in slide-in-from-right-4 duration-300">
-      {/* Panel Header */}
-      <div className="p-5 border-b border-slate-800/80 flex items-start justify-between bg-slate-900/50">
-        <div>
-          <div className="flex items-center space-x-2 mb-1.5">
-            <span
-              className={`text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded border flex items-center space-x-1 ${
-                isMuscle
-                  ? 'border-rose-500/40 bg-rose-500/15 text-rose-400'
-                  : 'border-cyan-500/40 bg-cyan-500/15 text-cyan-400'
-              }`}
-            >
-              {isMuscle ? <Flame className="w-3 h-3 mr-1" /> : <Bone className="w-3 h-3 mr-1" />}
-              {partData ? partData.system.toUpperCase() : 'ANATOMY ATLAS'}
-            </span>
-            {partData?.subsystem && (
-              <span className="text-[10px] font-mono text-slate-400">
-                • {partData.subsystem}
-              </span>
-            )}
-          </div>
-          <h2 className="text-xl font-bold text-slate-100 tracking-tight leading-snug">
-            {partData ? partData.commonName : 'Clinical Inspector'}
-          </h2>
-          {partData && (
-            <p className="text-xs italic font-serif text-cyan-400/90 mt-0.5">
-              {partData.scientificName}
-            </p>
-          )}
-        </div>
-
-        <button
-          onClick={() => setSidebarOpen(false)}
-          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-200 hover:bg-slate-800/60 transition-colors"
-        >
-          <X className="w-4 h-4" />
-        </button>
+  return <aside className="atlas-surface absolute bottom-4 right-4 z-20 flex max-h-[220px] w-[calc(100%-2rem)] flex-col overflow-hidden rounded-2xl pointer-events-auto md:bottom-auto md:right-7 md:top-[5.5rem] md:max-h-[calc(100vh-7rem)] md:w-[355px]">
+    <div className="flex items-start justify-between border-b border-white/[.08] p-5">
+      <div className="min-w-0"><p className="atlas-label">{data ? `${data.system} / ${data.category || 'structure'}` : 'Structure analysis'}</p><h2 className="mt-1 truncate text-lg font-semibold tracking-tight text-slate-100">{data?.commonName || 'Select a structure'}</h2>{data && <p className="mt-0.5 truncate font-serif text-xs italic text-cyan-200/80">{data.scientificName}</p>}</div>
+      <button onClick={() => setOpen(false)} className="ml-3 rounded-lg p-1.5 text-slate-500 hover:bg-white/[.06] hover:text-slate-200"><X size={16} /></button>
+    </div>
+    {data ? <>
+      <div className="grid grid-cols-3 gap-2 border-b border-white/[.08] p-3">
+        <button onClick={() => select(data.id, data.coordinates)} className="flex flex-col items-center gap-1 rounded-xl bg-cyan-300/[.08] px-2 py-2 text-[10px] font-semibold text-cyan-100 hover:bg-cyan-300/[.15]"><Crosshair size={15} /> Focus</button>
+        <button onClick={() => isolate(data.id)} className={`flex flex-col items-center gap-1 rounded-xl px-2 py-2 text-[10px] font-semibold ${isolated === selected ? 'bg-amber-300/15 text-amber-100' : 'bg-white/[.05] text-slate-300 hover:bg-white/[.09]'}`}><Maximize2 size={15} /> {isolated === selected ? 'Restore' : 'Isolate'}</button>
+        <button onClick={() => dissect(data.id)} className="flex flex-col items-center gap-1 rounded-xl bg-rose-400/[.09] px-2 py-2 text-[10px] font-semibold text-rose-100 hover:bg-rose-400/[.16]"><Scissors size={15} /> Dissect</button>
       </div>
-
-      {/* Content Area */}
-      {partData ? (
-        <div className="flex-1 overflow-y-auto p-5 space-y-4 custom-scrollbar">
-          {/* Action Toolbar */}
-          <div className="grid grid-cols-3 gap-2">
-            <button
-              onClick={() => selectPart(partData.id, partData.coordinates)}
-              className="flex items-center justify-center space-x-1 py-2 px-2.5 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 text-xs font-semibold transition-all shadow-sm"
-              title="Center Camera on Structure"
-            >
-              <Target className="w-3.5 h-3.5" />
-              <span>Center</span>
-            </button>
-
-            <button
-              onClick={() => setIsolatedPart(partData.id)}
-              className={`flex items-center justify-center space-x-1 py-2 px-2.5 rounded-xl border text-xs font-semibold transition-all ${
-                isIsolated
-                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-sm'
-                  : 'bg-slate-900/80 hover:bg-slate-850 border-slate-700/60 text-slate-300'
-              }`}
-              title="Dim All Other Structures"
-            >
-              {isIsolated ? (
-                <>
-                  <Minimize2 className="w-3.5 h-3.5" />
-                  <span>Show All</span>
-                </>
-              ) : (
-                <>
-                  <Maximize2 className="w-3.5 h-3.5" />
-                  <span>Isolate</span>
-                </>
-              )}
-            </button>
-
-            <button
-              onClick={() => dissectPart(partData.id)}
-              className="flex items-center justify-center space-x-1 py-2 px-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-300 text-xs font-semibold transition-all shadow-sm"
-              title="Peel/Hide this layer to reveal structures beneath"
-            >
-              <Scissors className="w-3.5 h-3.5" />
-              <span>Dissect</span>
-            </button>
-          </div>
-
-          {/* Navigation Tabs */}
-          <div className="flex border-b border-slate-800 text-xs font-medium">
-            <button
-              onClick={() => setActiveTab('overview')}
-              className={`pb-2 mr-4 border-b-2 transition-colors ${
-                activeTab === 'overview'
-                  ? 'border-cyan-400 text-cyan-400'
-                  : 'border-transparent text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              Overview & Actions
-            </button>
-            <button
-              onClick={() => setActiveTab('clinical')}
-              className={`pb-2 mr-4 border-b-2 transition-colors ${
-                activeTab === 'clinical'
-                  ? 'border-cyan-400 text-cyan-400'
-                  : 'border-transparent text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              Clinical Pathology
-            </button>
-            <button
-              onClick={() => setActiveTab('neurovascular')}
-              className={`pb-2 border-b-2 transition-colors ${
-                activeTab === 'neurovascular'
-                  ? 'border-cyan-400 text-cyan-400'
-                  : 'border-transparent text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              Nerve / Perfusion
-            </button>
-          </div>
-
-          {/* Tab 1: Overview */}
-          {activeTab === 'overview' && (
-            <div className="space-y-3.5">
-              <div>
-                <h4 className="text-[11px] font-mono uppercase tracking-wider text-slate-400 mb-1.5">
-                  Anatomical Description
-                </h4>
-                <div className="text-xs leading-relaxed text-slate-300 bg-slate-900/40 p-3 rounded-xl border border-slate-800/60 max-h-48 overflow-y-auto custom-scrollbar whitespace-pre-line">
-                  {partData.description}
-                </div>
-              </div>
-
-              <div>
-                <h4 className="text-[11px] font-mono uppercase tracking-wider text-slate-400 mb-1.5">
-                  Physiological Function & Actions
-                </h4>
-                <p className="text-xs leading-relaxed text-slate-300 bg-slate-900/40 p-3 rounded-xl border border-slate-800/60">
-                  {partData.actions || partData.primaryFunction}
-                </p>
-              </div>
-
-              {/* Wikipedia External Medical Link */}
-              {partData.wikiLink && (
-                <div>
-                  <a
-                    href={partData.wikiLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full py-2 px-3 rounded-xl bg-cyan-950/30 hover:bg-cyan-900/40 border border-cyan-500/30 text-cyan-300 text-xs font-semibold flex items-center justify-between transition-colors group"
-                  >
-                    <span>Read Medical Encyclopedia Entry</span>
-                    <ExternalLink className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-                  </a>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Tab 2: Clinical Significance */}
-          {activeTab === 'clinical' && (
-            <div className="space-y-3">
-              <div className="flex items-center space-x-2 text-amber-400 text-xs font-semibold">
-                <AlertTriangle className="w-4 h-4" />
-                <span>Clinical & Pathological Pearls</span>
-              </div>
-              <ul className="space-y-2">
-                {partData.clinicalSignificance.map((item, idx) => (
-                  <li
-                    key={idx}
-                    className="text-xs leading-relaxed text-slate-300 bg-slate-900/50 p-3 rounded-xl border border-slate-800/80 flex items-start space-x-2.5"
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 mt-1.5 flex-shrink-0" />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {/* Tab 3: Neurovascular */}
-          {activeTab === 'neurovascular' && (
-            <div className="space-y-3.5">
-              <div>
-                <h4 className="text-[11px] font-mono uppercase tracking-wider text-slate-400 mb-1.5 flex items-center space-x-1">
-                  <Zap className="w-3.5 h-3.5 text-cyan-400" />
-                  <span>Innervation</span>
-                </h4>
-                <p className="text-xs leading-relaxed text-slate-300 bg-slate-900/40 p-3 rounded-xl border border-slate-800/60">
-                  {partData.innervation || 'Innervated via regional somatic/autonomic nerve branches.'}
-                </p>
-              </div>
-
-              <div>
-                <h4 className="text-[11px] font-mono uppercase tracking-wider text-slate-400 mb-1.5 flex items-center space-x-1">
-                  <Flame className="w-3.5 h-3.5 text-rose-400" />
-                  <span>Arterial Perfusion & Venous Drainage</span>
-                </h4>
-                <p className="text-xs leading-relaxed text-slate-300 bg-slate-900/40 p-3 rounded-xl border border-slate-800/60">
-                  {partData.bloodSupply || 'Supplied via regional systemic arterial branches.'}
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
-      ) : (
-        /* Empty State */
-        <div className="flex-1 p-6 flex flex-col items-center justify-center text-center space-y-4">
-          <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shadow-cyan-sm">
-            <Stethoscope className="w-7 h-7" />
-          </div>
-
-          <div>
-            <h3 className="text-sm font-semibold text-slate-100">Atlas Inspector Ready</h3>
-            <p className="text-xs text-slate-400 mt-1 max-w-[240px] leading-relaxed">
-              Hover over and click any of the 826 bones or muscles to view Terminologia Anatomica, functions, and clinical pearls.
-            </p>
-          </div>
-
-          {/* Quick Shortcuts */}
-          <div className="w-full pt-4 border-t border-slate-800/80 space-y-1.5">
-            <span className="text-[10px] font-mono uppercase tracking-widest text-slate-400 block mb-2">
-              Featured Major Structures
-            </span>
-            {[
-              { id: 'Frontal bone', label: 'Frontal Bone (Cranium)' },
-              { id: 'Zygomaticus major muscle', label: 'Zygomaticus Major Muscle' },
-              { id: 'Deltoid muscle.002', label: 'Deltoid Muscle' },
-              { id: 'Biceps brachii', label: 'Biceps Brachii' },
-              { id: 'Gluteus maximus muscle', label: 'Gluteus Maximus Muscle' },
-            ].map((quick) => (
-              <button
-                key={quick.id}
-                onClick={() => selectPart(quick.id)}
-                className="w-full py-2 px-3 rounded-xl bg-slate-900/60 hover:bg-cyan-950/30 border border-slate-800 hover:border-cyan-500/40 text-xs text-slate-300 hover:text-cyan-300 flex items-center justify-between transition-all"
-              >
-                <span>{quick.label}</span>
-                <ChevronRight className="w-3.5 h-3.5 opacity-60" />
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Footer Info */}
-      <div className="p-3 bg-slate-950 border-t border-slate-800/80 flex items-center justify-between text-[10px] font-mono text-slate-400">
-        <span>Z-ANATOMY / TERMINOLOGIA ANATOMICA</span>
-        <span className="text-cyan-400">ONLINE</span>
+      <div className="flex gap-4 border-b border-white/[.08] px-5 pt-3">{([['profile', 'Profile'], ['clinical', 'Clinical'], ['supply', 'Neurovascular']] as const).map(([key, label]) => <button key={key} onClick={() => setTab(key)} className={`border-b-2 pb-2.5 text-[11px] font-semibold transition ${tab === key ? 'border-cyan-200 text-cyan-100' : 'border-transparent text-slate-500 hover:text-slate-200'}`}>{label}</button>)}</div>
+      <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto p-5">
+        {tab === 'profile' && <div className="space-y-4"><Section title="Anatomical overview">{data.description}</Section><Section title="Function & movement">{data.actions || data.primaryFunction}</Section>{data.wikiLink && <a href={data.wikiLink} target="_blank" rel="noopener noreferrer" className="flex items-center justify-between rounded-xl border border-cyan-300/20 bg-cyan-300/[.06] px-3 py-2.5 text-xs font-medium text-cyan-100 hover:bg-cyan-300/[.1]">Reference entry <ExternalLink size={14} /></a>}</div>}
+        {tab === 'clinical' && <div className="space-y-3"><p className="atlas-label">Clinical considerations</p>{data.clinicalSignificance.map((item, index) => <div key={index} className="rounded-xl border border-white/[.07] bg-black/10 p-3 text-xs leading-relaxed text-slate-300"><span className="mr-2 text-cyan-300">0{index + 1}</span>{item}</div>)}</div>}
+        {tab === 'supply' && <div className="space-y-4"><Section title="Innervation">{data.innervation || 'Regional somatic or autonomic pathways.'}</Section><Section title="Arterial supply & venous return">{data.bloodSupply || 'Regional systemic arterial branches and companion venous drainage.'}</Section></div>}
       </div>
-    </aside>
-  );
+    </> : <div className="flex flex-1 flex-col justify-center p-7"><div className="mb-4 grid h-11 w-11 place-items-center rounded-xl bg-cyan-300/[.1] text-cyan-200"><Crosshair size={21} /></div><h3 className="text-sm font-semibold text-slate-100">Anatomy, in context.</h3><p className="mt-2 max-w-[245px] text-xs leading-relaxed text-slate-400">Click a muscle or bone to inspect its terminology, movement, clinical relevance, and blood or nerve supply.</p></div>}
+  </aside>;
 };
+
+const Section = ({ title, children }: { title: string; children: React.ReactNode }) => <section><p className="atlas-label mb-2">{title}</p><p className="rounded-xl border border-white/[.07] bg-black/10 p-3 text-xs leading-relaxed text-slate-300">{children}</p></section>;

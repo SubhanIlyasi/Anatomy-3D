@@ -7,8 +7,11 @@ import { formatAnatomyName, deriveLatinName, classifyStructure } from '../../dat
 export const HoverTooltip: React.FC = () => {
   const hoveredPartId = useAnatomyStore((state) => state.hoveredPartId);
   const hoveredPartData = useAnatomyStore((state) => state.hoveredPartData);
+  const selectedPartId = useAnatomyStore((state) => state.selectedPartId);
 
-  if (!hoveredPartId) return null;
+  // Once a structure is selected, the inspector owns the information layer.
+  // Keeping the hover capsule would obscure its actions on compact screens.
+  if (!hoveredPartId || selectedPartId) return null;
 
   // Prefer enriched record data from Zustand, fallback to parser
   const fallbackFormat = formatAnatomyName(hoveredPartId);
@@ -19,8 +22,8 @@ export const HoverTooltip: React.FC = () => {
   const isMuscle = system === 'muscular';
 
   return (
-    <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-30 pointer-events-none animate-in fade-in zoom-in-95 duration-150 max-w-[90vw]">
-      <div className="flex items-center space-x-3 px-4 py-2 bg-slate-950/95 border border-cyan-500/40 rounded-full shadow-medical-glow backdrop-blur-xl">
+    <div className="absolute bottom-16 left-1/2 -translate-x-1/2 z-30 pointer-events-none animate-in fade-in zoom-in-95 duration-150 max-w-[90vw]">
+      <div className="atlas-surface flex items-center space-x-3 rounded-full px-4 py-2">
         <span
           className={`w-2 h-2 rounded-full animate-ping ${
             isMuscle ? 'bg-rose-500' : 'bg-cyan-400'

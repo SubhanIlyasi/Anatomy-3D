@@ -1,192 +1,69 @@
 'use client';
 
-import React, { useState, useRef, useEffect, useMemo } from 'react';
-import {
-  Search,
-  RotateCcw,
-  Layers,
-  Activity,
-  X,
-  Flame,
-  Bone,
-} from 'lucide-react';
-import { useAnatomyStore } from '../../store/useAnatomyStore';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Activity, Box, ChevronRight, RotateCcw, Search, X } from 'lucide-react';
 import { ANATOMY_CATALOGUE } from '../../data/anatomyCatalogue';
+import { useAnatomyStore } from '../../store/useAnatomyStore';
 import { RenderMode } from '../../types/anatomy';
 
 export const HeaderHUD: React.FC = () => {
   const renderMode = useAnatomyStore((state) => state.renderMode);
   const explodedView = useAnatomyStore((state) => state.explodedView);
+  const selectedPartId = useAnatomyStore((state) => state.selectedPartId);
   const selectPart = useAnatomyStore((state) => state.selectPart);
   const setRenderMode = useAnatomyStore((state) => state.setRenderMode);
   const toggleExplodedView = useAnatomyStore((state) => state.toggleExplodedView);
   const resetView = useAnatomyStore((state) => state.resetView);
-
   const [query, setQuery] = useState('');
-  const [isSearching, setIsSearching] = useState(false);
-  const searchRef = useRef<HTMLDivElement>(null);
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
 
-  // Search across all 826 anatomical structures by English, Latin, and ID
-  const searchResults = useMemo(() => {
-    if (!query.trim()) return [];
-    const q = query.toLowerCase();
-    return ANATOMY_CATALOGUE.filter((item) => {
-      return (
-        item.cleanName.toLowerCase().includes(q) ||
-        item.latinName.toLowerCase().includes(q) ||
-        item.id.toLowerCase().includes(q)
-      );
-    }).slice(0, 10);
+  const results = useMemo(() => {
+    const term = query.trim().toLowerCase();
+    if (!term) return [];
+    return ANATOMY_CATALOGUE.filter(({ cleanName, latinName, id }) =>
+      `${cleanName} ${latinName} ${id}`.toLowerCase().includes(term)
+    ).slice(0, 7);
   }, [query]);
 
-  // Handle outside click
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
-        setIsSearching(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    const close = (event: MouseEvent) => { if (!ref.current?.contains(event.target as Node)) setOpen(false); };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
   }, []);
 
   return (
-    <header className="absolute top-0 left-0 right-0 z-30 pointer-events-none px-6 py-4 flex items-center justify-between">
-      {/* Brand & System Title */}
-      <div className="flex items-center space-x-3 pointer-events-auto">
-        <div className="w-10 h-10 rounded-xl bg-slate-900/90 border border-cyan-500/40 flex items-center justify-center shadow-medical-glow backdrop-blur-md">
-          <Activity className="w-5 h-5 text-cyan-400" />
+    <header className="absolute inset-x-0 top-0 z-30 flex items-start justify-between p-4 md:p-6 pointer-events-none">
+      <div className="pointer-events-auto flex items-center gap-3">
+        <div className="h-10 w-10 rounded-2xl bg-cyan-300 text-slate-950 grid place-items-center shadow-[0_0_35px_rgba(98,212,232,.26)]">
+          <Activity size={21} strokeWidth={2.5} />
         </div>
-        <div>
-          <h1 className="text-base font-bold text-slate-100 tracking-tight flex items-center space-x-2">
-            <span>BioDigital Atlas</span>
-            <span className="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-cyan-950/80 border border-cyan-500/30 text-cyan-400">
-              3D Clinical Pro
-            </span>
-          </h1>
-          <p className="text-[11px] text-slate-400 font-mono">
-            826 Structures • Terminologia Anatomica
-          </p>
+        <div className="leading-tight">
+          <div className="flex items-center gap-2"><h1 className="font-semibold tracking-tight text-slate-100">Anatomy Atlas</h1><span className="atlas-label rounded-full border border-cyan-300/20 bg-cyan-300/10 px-2 py-0.5 text-cyan-200">Studio</span></div>
+          <p className="mt-1 text-[11px] text-slate-400">Interactive skeletal & muscular analysis</p>
         </div>
       </div>
 
-      {/* Center Search Input */}
-      <div ref={searchRef} className="relative w-80 md:w-96 pointer-events-auto">
-        <div className="relative flex items-center">
-          <Search className="absolute left-3.5 w-4 h-4 text-cyan-400 pointer-events-none" />
-          <input
-            type="text"
-            placeholder="Search 826 muscles, bones, nerves, Latin..."
-            value={query}
-            onFocus={() => setIsSearching(true)}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              setIsSearching(true);
-            }}
-            className="w-full pl-10 pr-9 py-2 bg-slate-900/80 hover:bg-slate-900/95 focus:bg-slate-950 border border-slate-700/60 focus:border-cyan-500/80 rounded-xl text-xs text-slate-100 placeholder-slate-400 backdrop-blur-md shadow-lg outline-none transition-all"
-          />
-          {query && (
-            <button
-              onClick={() => {
-                setQuery('');
-                setIsSearching(false);
-              }}
-              className="absolute right-3 text-slate-400 hover:text-slate-200"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          )}
-        </div>
-
-        {/* Search Results Autocomplete Dropdown */}
-        {isSearching && searchResults.length > 0 && (
-          <div className="absolute top-full left-0 right-0 mt-2 max-h-72 overflow-y-auto bg-slate-950/95 border border-cyan-500/30 rounded-xl shadow-2xl backdrop-blur-xl divide-y divide-slate-800/60 z-50">
-            {searchResults.map((item) => {
-              const isMuscle = item.subType === 'muscle' || item.system === 'muscular';
-
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => {
-                    selectPart(item.id);
-                    setIsSearching(false);
-                    setQuery('');
-                  }}
-                  className="w-full text-left px-4 py-2.5 hover:bg-cyan-950/30 transition-colors flex items-center justify-between group"
-                >
-                  <div className="flex items-center space-x-2 overflow-hidden pr-2">
-                    {isMuscle ? (
-                      <Flame className="w-3.5 h-3.5 text-rose-400 flex-shrink-0" />
-                    ) : (
-                      <Bone className="w-3.5 h-3.5 text-cyan-400 flex-shrink-0" />
-                    )}
-                    <div className="truncate">
-                      <span className="text-xs font-semibold text-slate-200 group-hover:text-cyan-300 block truncate">
-                        {item.cleanName}
-                      </span>
-                      <span className="text-[10px] font-serif italic text-cyan-400/80 block truncate">
-                        {item.latinName}
-                      </span>
-                    </div>
-                  </div>
-                  <span
-                    className={`text-[9px] uppercase font-mono px-2 py-0.5 rounded border flex-shrink-0 ${
-                      isMuscle
-                        ? 'bg-rose-950/40 text-rose-300 border-rose-800/50'
-                        : 'bg-cyan-950/40 text-cyan-300 border-cyan-800/50'
-                    }`}
-                  >
-                    {item.system}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        )}
+      <div ref={ref} className="pointer-events-auto relative mt-0.5 hidden w-[min(34vw,400px)] md:block">
+        <Search className="absolute left-3.5 top-3 text-cyan-200/80" size={16} />
+        <input value={query} onFocus={() => setOpen(true)} onChange={(e) => { setQuery(e.target.value); setOpen(true); }} placeholder="Find a muscle, bone, or Latin name" className="atlas-surface h-10 w-full rounded-xl pl-10 pr-9 text-xs text-slate-100 outline-none transition focus:border-cyan-300/50" />
+        {query && <button onClick={() => { setQuery(''); setOpen(false); }} className="absolute right-3 top-2.5 text-slate-500 hover:text-slate-200"><X size={16} /></button>}
+        {open && results.length > 0 && <div className="atlas-surface absolute mt-2 w-full overflow-hidden rounded-xl p-1">
+          {results.map((item) => <button key={item.id} onClick={() => { selectPart(item.id); setQuery(''); setOpen(false); }} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left hover:bg-white/[.06]">
+            <span className={`h-2 w-2 rounded-full ${item.system === 'muscular' ? 'bg-rose-400' : 'bg-cyan-300'}`} />
+            <span className="min-w-0 flex-1"><span className="block truncate text-xs font-medium text-slate-100">{item.cleanName}</span><span className="block truncate font-serif text-[11px] italic text-slate-400">{item.latinName}</span></span><ChevronRight size={14} className="text-slate-500" />
+          </button>)}
+        </div>}
       </div>
 
-      {/* Right Quick Tool Controls */}
-      <div className="flex items-center space-x-2 pointer-events-auto">
-        {/* Render Mode Switcher */}
-        <div className="flex items-center bg-slate-900/80 border border-slate-800 rounded-xl p-1 shadow-md backdrop-blur-md">
-          {(['standard', 'xray', 'wireframe'] as RenderMode[]).map((mode) => (
-            <button
-              key={mode}
-              onClick={() => setRenderMode(mode)}
-              className={`px-2.5 py-1 rounded-lg text-xs font-medium uppercase tracking-wider transition-all ${
-                renderMode === mode
-                  ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-              }`}
-            >
-              {mode}
-            </button>
-          ))}
+      <div className="pointer-events-auto flex items-center gap-2">
+        <div className="atlas-surface desktop-only flex rounded-xl p-1">
+          {(['standard', 'xray', 'wireframe'] as RenderMode[]).map((mode) => <button key={mode} onClick={() => setRenderMode(mode)} className={`rounded-lg px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wider transition ${renderMode === mode ? 'bg-cyan-300 text-slate-950' : 'text-slate-400 hover:text-slate-100'}`}>{mode}</button>)}
         </div>
-
-        {/* Exploded View Toggle */}
-        <button
-          onClick={toggleExplodedView}
-          className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl border text-xs font-semibold transition-all backdrop-blur-md shadow-md ${
-            explodedView
-              ? 'bg-amber-500/20 text-amber-300 border-amber-500/50 shadow-amber-500/20 shadow-lg'
-              : 'bg-slate-900/80 text-slate-300 border-slate-800 hover:border-slate-700 hover:text-slate-100'
-          }`}
-          title="Exploded Anatomical View"
-        >
-          <Layers className="w-3.5 h-3.5 text-amber-400" />
-          <span>Exploded</span>
-        </button>
-
-        {/* Reset Camera */}
-        <button
-          onClick={resetView}
-          className="p-2 bg-slate-900/80 hover:bg-slate-800/90 text-slate-400 hover:text-cyan-300 border border-slate-800 rounded-xl transition-all shadow-md backdrop-blur-md"
-          title="Reset Camera Orientation"
-        >
-          <RotateCcw className="w-4 h-4" />
-        </button>
+        <button onClick={toggleExplodedView} className={`atlas-surface flex h-10 items-center gap-2 rounded-xl px-3 text-xs font-medium ${explodedView ? 'border-amber-300/50 text-amber-200' : 'text-slate-300'}`} title="Toggle exploded view"><Box size={15} /><span className="desktop-only">Explode</span></button>
+        <button onClick={resetView} className="atlas-surface grid h-10 w-10 place-items-center rounded-xl text-slate-400 hover:text-cyan-200" title="Reset analysis"><RotateCcw size={16} /></button>
       </div>
+      {selectedPartId && <div className="absolute left-1/2 top-[74px] hidden -translate-x-1/2 rounded-full border border-white/10 bg-slate-950/65 px-3 py-1 text-[10px] font-mono text-slate-300 backdrop-blur md:block">ANALYZING · {selectedPartId}</div>}
     </header>
   );
 };

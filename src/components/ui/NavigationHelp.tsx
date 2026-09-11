@@ -7,7 +7,7 @@ export const NavigationHelp: React.FC = () => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
-    <div className="absolute bottom-6 left-6 z-20 pointer-events-auto">
+    <div className="absolute bottom-6 left-1/2 z-20 -translate-x-1/2 pointer-events-auto">
       {isExpanded ? (
         <div className="p-3 bg-slate-950/90 border border-slate-800 rounded-xl shadow-medical-panel backdrop-blur-md text-[11px] text-slate-300 space-y-1.5 animate-in fade-in duration-200">
           <div className="flex items-center justify-between pb-1.5 border-b border-slate-800 text-slate-400 font-mono text-[10px]">
@@ -32,7 +32,7 @@ export const NavigationHelp: React.FC = () => {
             <span><strong className="text-slate-100">Scroll:</strong> Zoom (Distance Limited)</span>
           </div>
           <div className="pt-1 text-[10px] text-cyan-400/80 font-mono">
-            ★ Click any organ to focus & inspect
+            Click a structure to focus & inspect
           </div>
         </div>
       ) : (
