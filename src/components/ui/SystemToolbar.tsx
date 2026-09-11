@@ -28,8 +28,8 @@ export const SystemToolbar: React.FC = () => {
       </button>)}
     </div>
     <div className="mt-4 border-t border-white/[.08] pt-3">
-      <div className="mb-2 flex justify-between"><span className="text-[11px] font-medium text-slate-300">Muscle transparency</span><span className="font-mono text-[11px] text-rose-300">{Math.round(opacity * 100)}%</span></div>
-      <input aria-label="Muscle transparency" type="range" min="0" max="1" step="0.02" value={opacity} onChange={(e) => setMuscleOpacity(Number(e.target.value))} className="h-1.5 w-full cursor-pointer accent-rose-400" />
+      <div className="mb-2 flex justify-between"><span className="text-[11px] font-medium text-slate-300">Muscle opacity</span><span className="font-mono text-[11px] text-rose-300">{Math.round(opacity * 100)}%</span></div>
+      <input aria-label="Muscle opacity" type="range" min="0" max="1" step="0.01" value={opacity} onChange={(e) => setMuscleOpacity(Number(e.target.value))} className="h-1.5 w-full cursor-pointer accent-rose-400" />
     </div>
     <div className="mt-4 flex gap-2 border-t border-white/[.08] pt-3">
       <button onClick={() => selectPart('Frontal bone', [0, 1.4, 0])} className="rounded-lg bg-white/[.055] px-2.5 py-1.5 text-[10px] font-medium text-slate-300 hover:bg-white/[.1]">Cranium</button>
